@@ -32,6 +32,7 @@
   gap: 1rem;
   block-size: 100dvh;
   overflow-y: auto;
+  overscroll-behavior: none;
 }
 
 #exhibit[data-mode="explore"] > * {
