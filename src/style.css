@@ -85,6 +85,10 @@
   padding-block: 0;
 }
 
+#exhibit[data-mode="kiosk"] :is(#processing-divider, #compare-heading, #compare-divider) {
+  display: none;
+}
+
 #exhibit[data-mode="kiosk"] #preview-filter {
   font-size: clamp(1.5rem, 3vw, 2.5rem);
   line-height: 1.1;

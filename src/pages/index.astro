@@ -88,7 +88,7 @@ const canvasClass = 'absolute h-auto max-h-full w-auto max-w-full cursor-crossha
             <canvas id="before" class={canvasClass} tabindex="-1" aria-label="Original image. Use arrow keys to move the pixel selector."></canvas>
           </div>
         </article>
-        <section id="processing-panel" class="col-span-2 row-start-1 grid min-w-0 gap-2 self-center border-y py-3 sm:grid-cols-2 sm:gap-4 lg:col-span-1 lg:row-start-auto lg:grid-cols-1" aria-labelledby="processing">
+        <section id="processing-panel" class="col-span-2 row-start-1 grid min-w-0 gap-2 self-center border-t py-3 sm:grid-cols-2 sm:gap-4 lg:col-span-1 lg:row-start-auto lg:grid-cols-1" aria-labelledby="processing">
           <div class="min-w-0">
             <h2 id="processing" class="font-semibold">
               <span id="processing-label" class="block text-xs text-muted-foreground" hidden>Processing</span>
@@ -122,6 +122,12 @@ const canvasClass = 'absolute h-auto max-h-full w-auto max-w-full cursor-crossha
             </div>
             <pre tabindex="0" aria-label="Filter code" class="min-h-0 flex-1 overflow-auto px-3 py-2 font-mono text-sm leading-4 tab-size-2"><code id="code"></code></pre>
           </div>
+          <hr id="processing-divider" class="col-span-full border-border" />
+          <section id="pixel-comparison" class="col-span-full space-y-2" aria-labelledby="compare-heading">
+            <h2 id="compare-heading" class="text-xs font-semibold text-muted-foreground">Compare</h2>
+            <div id="pixel-comparison-readouts" class="grid grid-cols-2 gap-2 opacity-60"></div>
+            <hr id="compare-divider" class="border-border" />
+          </section>
         </section>
         <article class="min-w-0 space-y-2">
           <h2 class="text-sm font-semibold">Output <span class="ml-1 font-normal text-muted-foreground">· Filtered</span></h2>

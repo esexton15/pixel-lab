@@ -22,6 +22,7 @@ let request = 0
 let frozen = false
 
 const idleDelay = 60_000
+const maxImageSize = 480
 const previewDelay = 5_000
 let exploring = false
 let idleTimer
@@ -40,19 +41,33 @@ const gridSize = (2 * gridRadius + 1) * cellSize
 
 const imageCanvases = [before, after]
 const readouts = imageCanvases.map((canvas, index) => {
+  const readout = createPixelReadout(index, true)
+  readout.panel.hidden = true
+  canvas.parentElement.append(readout.panel)
+  return readout
+})
+const comparisonPanels = byId('pixel-comparison-readouts')
+const comparisonReadouts = imageCanvases.map((_, index) => {
+  const readout = createPixelReadout(index, false)
+  clearPixelReadout(readout)
+  comparisonPanels.append(readout.panel)
+  return readout
+})
+
+function createPixelReadout(index, popup) {
   const panel = document.createElement('div')
-  panel.className = 'pointer-events-none absolute z-10 w-40 max-w-full sm:w-52 rounded-md border bg-background p-2 shadow-sm'
-  panel.hidden = true
-  canvas.parentElement.append(panel)
+  panel.className = popup
+    ? 'pointer-events-none absolute z-10 w-40 max-w-full sm:w-52 rounded-md border bg-background p-2 shadow-sm'
+    : 'min-w-0 rounded-md border bg-muted/40 p-2'
   panel.innerHTML = `<div class="mb-1 flex items-center gap-2">
       <h3 class="text-sm font-medium">${index === 0 ? 'Input pixel' : 'Output pixel'}</h3>
-      <span class="swatch size-3 rounded-sm border" aria-hidden="true"></span>
+      <span class="swatch size-3 rounded-sm border bg-muted" aria-hidden="true"></span>
     </div>
     <p class="pixel-coordinates mb-2 font-mono text-xs text-muted-foreground"></p>
-    <div class="flex items-center gap-2">
-      <canvas class="pixel-grid w-12 shrink-0 border sm:w-20" width="${gridSize}" height="${gridSize}"
+    <div class="flex items-center gap-2 ${popup ? '' : 'flex-wrap'}">
+      <canvas class="pixel-grid w-12 shrink-0 border bg-muted ${popup ? 'sm:w-20' : ''}" width="${gridSize}" height="${gridSize}"
         role="img" aria-label="Zoomed pixel grid with the selected pixel outlined in the center"></canvas>
-      <div class="min-w-0 flex-1 space-y-1">
+      <div class="min-w-0 flex-1 space-y-1 ${popup ? '' : 'basis-16'}">
         ${channels.map(({ label, color }) => `
           <div class="grid grid-cols-[1ch_minmax(0,1fr)_3ch] items-center gap-2 text-xs">
             <span aria-label="${label}">${label[0]}</span>
@@ -71,7 +86,7 @@ const readouts = imageCanvases.map((canvas, index) => {
     fills: panel.querySelectorAll('.channel-fill'),
     values: panel.querySelectorAll('.channel-value'),
   }
-})
+}
 
 const previewFilters = byId('preview-filters')
 const customButton = byId('custom-filter')
@@ -147,7 +162,7 @@ function showStatus(message = '') {
 
 function capture(media, width, height) {
   const cropSize = Math.min(width, height)
-  const size = Math.min(480, cropSize)
+  const size = Math.min(maxImageSize, cropSize)
   if (sourceCanvas.width !== size || sourceCanvas.height !== size || !result) {
     sourceCanvas.width = before.width = after.width = size
     sourceCanvas.height = before.height = after.height = size
@@ -188,17 +203,33 @@ function draw() {
   const offset = (y * width + x) * 4
   for (const [index, image] of [original, result].entries()) {
     const rgb = image.data.subarray(offset, offset + 3)
+    updatePixelReadout(comparisonReadouts[index], image, x, y, coordinates, rgb)
     const readout = readouts[index]
-    if (readout.panel.hidden) continue
-    readout.coordinates.textContent = coordinates
-    drawPixelGrid(readout.grid, image, x, y)
-    readout.swatch.style.background = `rgb(${rgb.join(',')})`
-    positionMagnifier(readout.panel, imageCanvases[index], x, y)
-    rgb.forEach((value, channel) => {
-      readout.fills[channel].style.width = `${value / 255 * 100}%`
-      readout.values[channel].textContent = value
-    })
+    if (!readout.panel.hidden) {
+      updatePixelReadout(readout, image, x, y, coordinates, rgb)
+      positionMagnifier(readout.panel, imageCanvases[index], x, y)
+    }
   }
+}
+
+function clearPixelReadout(readout) {
+  readout.coordinates.textContent = 'N/A'
+  readout.grid.clearRect(0, 0, gridSize, gridSize)
+  readout.grid.canvas.setAttribute('aria-hidden', 'true')
+  readout.swatch.style.background = ''
+  for (const fill of readout.fills) fill.style.width = '0%'
+  for (const value of readout.values) value.textContent = 'N/A'
+}
+
+function updatePixelReadout(readout, image, x, y, coordinates, rgb) {
+  readout.grid.canvas.removeAttribute('aria-hidden')
+  readout.coordinates.textContent = coordinates
+  drawPixelGrid(readout.grid, image, x, y)
+  readout.swatch.style.background = `rgb(${rgb.join(', ')})`
+  rgb.forEach((value, channel) => {
+    readout.fills[channel].style.width = `${value / 255 * 100}%`
+    readout.values[channel].textContent = value
+  })
 }
 
 function drawPixelGrid(context, image, centerX, centerY) {
@@ -232,6 +263,22 @@ function positionMagnifier(preview, canvas, x, y) {
   const cursorX = canvas.offsetLeft + (x + 0.5) / canvas.width * canvas.clientWidth
   const cursorY = canvas.offsetTop + (y + 0.5) / canvas.height * canvas.clientHeight
   const gap = 10
+  if (!exploring) {
+    const imageLeft = canvas.offsetLeft
+    const imageTop = canvas.offsetTop
+    const imageBottom = imageTop + canvas.clientHeight
+    const scale = Math.min(1,
+      Math.max(0, cursorX - imageLeft - gap) / preview.offsetWidth,
+      canvas.clientHeight / preview.offsetHeight)
+    const popupHeight = preview.offsetHeight * scale
+    preview.style.transformOrigin = 'top left'
+    preview.style.transform = `scale(${scale})`
+    preview.style.left = `${Math.max(imageLeft, cursorX - gap - preview.offsetWidth * scale)}px`
+    preview.style.top = `${Math.max(imageTop, Math.min(imageBottom - popupHeight, cursorY - popupHeight / 2))}px`
+    return
+  }
+
+  preview.style.transform = ''
   const maxLeft = frame.clientWidth - preview.offsetWidth
   const maxTop = frame.clientHeight - preview.offsetHeight
   const right = cursorX + gap
@@ -247,9 +294,13 @@ function positionMagnifier(preview, canvas, x, y) {
 
 function showMagnifiers(visible) {
   const hidden = exploring && !visible
+  comparisonPanels.classList.toggle('opacity-60', hidden)
   const wasVisible = readouts.some(({ panel }) => !panel.hidden)
   for (const { panel } of readouts) panel.hidden = hidden
-  if (hidden && wasVisible) draw()
+  if (hidden && wasVisible) {
+    for (const readout of comparisonReadouts) clearPixelReadout(readout)
+    draw()
+  }
 }
 
 const clamp = (value) => Math.min(0.999999, Math.max(0, value))
@@ -376,8 +427,8 @@ function setExploring(active) {
 function startAttractMode() {
   const returning = exploring
   setExploring(false)
-  selectedX = 0.52
-  selectedY = 0.14
+  selectedX = (463 - 0.5) / maxImageSize
+  selectedY = (81 - 0.5) / maxImageSize
   showMagnifiers(true)
   if (stream) {
     original = undefined
