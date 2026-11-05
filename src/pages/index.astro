@@ -36,10 +36,19 @@ const canvasClass = 'absolute h-auto max-h-full w-auto max-w-full cursor-crossha
 
       <header id="explore-header" class="grid items-start gap-4 md:grid-cols-2 md:gap-6" hidden>
         <div class="space-y-1">
-          <p class="flex items-center gap-2 text-sm text-muted-foreground">
-            <img src={`${sampleBase}/favicon.ico`} width="16" height="16" alt="" class="shrink-0" />
-            Ivy Tech - School of Information Technology
-          </p>
+          <div class="flex items-center gap-1">
+            <Button id="back-to-kiosk" aria-label="Back to kiosk" title="Back to kiosk"
+              class="-ml-2 size-11! border-0! bg-transparent! p-0! shadow-none! hover:bg-accent!">
+              <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 12H5m7 7-7-7 7-7" />
+              </svg>
+            </Button>
+            <p class="flex items-center gap-2 text-sm text-muted-foreground">
+              <img src={`${sampleBase}/favicon.ico`} width="16" height="16" alt="" class="shrink-0" />
+              Ivy Tech - School of Information Technology
+            </p>
+          </div>
           <h1 class="text-3xl font-semibold">{exhibitTitle}</h1>
           <p class="max-w-2xl text-sm text-muted-foreground">
             A photo is a grid of pixels. Each RGB pixel has three numbers that tell

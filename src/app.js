@@ -425,6 +425,7 @@ function setExploring(active) {
 }
 
 function startAttractMode() {
+  clearTimeout(idleTimer)
   const returning = exploring
   setExploring(false)
   selectedX = (463 - 0.5) / maxImageSize
@@ -458,6 +459,11 @@ function resetIdleTimer() {
   clearTimeout(idleTimer)
   idleTimer = setTimeout(startAttractMode, idleDelay)
 }
+
+byId('back-to-kiosk').addEventListener('click', (event) => {
+  event.stopPropagation()
+  startAttractMode()
+})
 
 byId('exhibit').addEventListener('click', () => {
   if (exploring) return
