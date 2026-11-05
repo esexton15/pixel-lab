@@ -2,31 +2,40 @@ export const filters = [
   {
     label: 'Original',
     description: 'Keep the original red, green, and blue values.',
+    code: `(r, g, b) => [r, g, b]`,
     apply: (r, g, b) => [r, g, b],
   },
   {
     label: 'Remove red',
     description: 'Set red to zero. Keep green and blue.',
+    code: `(r, g, b) => [0, g, b]`,
     apply: (r, g, b) => [0, g, b],
   },
   {
     label: 'Remove blue',
     description: 'Set blue to zero. Keep red and green.',
+    code: `(r, g, b) => [r, g, 0]`,
     apply: (r, g, b) => [r, g, 0],
   },
   {
     label: 'Green only',
     description: 'Keep green. Set red and blue to zero.',
+    code: `(r, g, b) => [0, g, 0]`,
     apply: (r, g, b) => [0, g, 0],
   },
   {
     label: 'Red only',
     description: 'Keep red. Set green and blue to zero.',
+    code: `(r, g, b) => [r, 0, 0]`,
     apply: (r, g, b) => [r, 0, 0],
   },
   {
     label: 'Grayscale',
     description: 'Estimate brightness and use it for all three channels.',
+    code: `(r, g, b) => {
+  const brightness = 0.21 * r + 0.72 * g + 0.07 * b
+  return [brightness, brightness, brightness]
+}`,
     apply: (r, g, b) => {
       const brightness = 0.21 * r + 0.72 * g + 0.07 * b
       return [brightness, brightness, brightness]
@@ -35,17 +44,24 @@ export const filters = [
   {
     label: 'Invert',
     description: 'Subtract each color value from 255.',
+    code: `(r, g, b) => [255 - r, 255 - g, 255 - b]`,
     apply: (r, g, b) => [255 - r, 255 - g, 255 - b],
   },
   {
     label: 'Swap',
     description: 'Swap red and blue. Keep green the same.',
+    code: `(r, g, b) => [b, g, r]`,
     apply: (r, g, b) => [b, g, r],
   },
   {
     label: 'Blur',
     exploreOnly: true,
     description: 'Average the colors in a 3 × 3 neighborhood.',
+    code: `(r, g, b, neighbors) => [
+  average(neighbors, 0),
+  average(neighbors, 1),
+  average(neighbors, 2),
+]`,
     apply: (r, g, b, neighbors) => [
       average(neighbors, 0),
       average(neighbors, 1),

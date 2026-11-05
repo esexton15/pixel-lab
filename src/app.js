@@ -105,7 +105,7 @@ function selectFilter(item) {
   customControls.hidden = !isCustom
   customButton.setAttribute('aria-pressed', String(isCustom))
   byId('description').textContent = item.description
-  showFilterCode(item.code ?? item.apply.toString().replace(/^ {4}/gm, ''))
+  showFilterCode(item.code)
   presetButtons.forEach((button, index) => {
     button.setAttribute('aria-pressed', String(filters[index] === item))
   })
