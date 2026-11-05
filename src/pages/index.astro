@@ -22,6 +22,9 @@ const canvasClass = 'absolute h-auto max-h-full w-auto max-w-full cursor-crossha
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Pixel Lab</title>
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="manifest" href={`${sampleBase}/manifest.webmanifest`} />
+    <link rel="apple-touch-icon" href={`${sampleBase}/icons/pixel-192.png`} />
   </head>
   <body>
     <main id="exhibit" data-mode="kiosk" class="space-y-4 p-4 sm:p-6">
@@ -131,8 +134,10 @@ const canvasClass = 'absolute h-auto max-h-full w-auto max-w-full cursor-crossha
 
       <footer id="attract" class="text-center">
         <Button id="explore" class="h-16! w-full max-w-sm bg-primary! text-xl! text-primary-foreground! hover:bg-primary/90!">Tap to explore</Button>
+        <p id="offline-status" class="mt-2 text-xs text-muted-foreground" role="status" hidden></p>
       </footer>
     </main>
     <script src="../app.js"></script>
+    <script src="../offline.js"></script>
   </body>
 </html>
