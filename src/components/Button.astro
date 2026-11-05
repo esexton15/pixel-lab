@@ -1,0 +1,19 @@
+---
+// The default-size shadcn/ui New York button, rendered as a native Astro button.
+import type { HTMLAttributes } from 'astro/types'
+
+type Props = HTMLAttributes<'button'>
+const { class: className, ...props } = Astro.props
+---
+<button
+  type="button"
+  data-slot="button"
+  class:list={[
+    'inline-flex h-9 shrink-0 items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
+    'border bg-background shadow-xs hover:bg-accent aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary/90',
+    className,
+  ]}
+  {...props}
+>
+  <slot />
+</button>

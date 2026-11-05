@@ -1,0 +1,17 @@
+{
+  "name": "pixel-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^7.3.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.4",
+    "tailwindcss": "^4.3.4"
+  }
+}

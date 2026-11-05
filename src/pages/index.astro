@@ -1,0 +1,107 @@
+---
+import '../style.css'
+import Button from '../components/Button.astro'
+import { customChannelRules, filters } from '../filters.js'
+
+const samples = [
+  { id: 'astronaut', label: 'Astronaut' },
+  { id: 'mountains', label: 'Mountains' },
+  { id: 'cat', label: 'Cat' },
+  { id: 'coffee', label: 'Coffee' },
+]
+
+const frameClass = 'relative grid aspect-[4/3] place-items-center overflow-hidden rounded-md border bg-muted'
+const canvasClass = 'absolute h-auto max-h-full w-auto max-w-full cursor-crosshair touch-manipulation focus-visible:outline-2 focus-visible:-outline-offset-2'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixel Lab</title>
+  </head>
+  <body>
+    <main id="exhibit" data-mode="kiosk" class="mx-auto max-w-7xl space-y-5 p-4 sm:p-6">
+      <header id="explore-header" class="space-y-1" hidden>
+        <p class="text-sm text-muted-foreground">School of Information Technology</p>
+        <h1 class="text-3xl font-semibold">Pixel Lab</h1>
+        <p class="max-w-2xl text-sm text-muted-foreground">
+          A photo is a grid of pixels. Each RGB pixel has three numbers that tell
+          the screen how much red, green, and blue to show. Pick a rule to change
+          those numbers.
+        </p>
+      </header>
+
+      <section id="explore-controls" class="space-y-3" aria-label="Exhibit controls" hidden>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Input source">
+          <span class="w-14 text-sm font-medium">Source</span>
+          {samples.map(({ id, label }, index) => (
+            <Button
+              id={id}
+              data-sample={`/samples/${id}.jpg`}
+              aria-pressed={index === 0 ? 'true' : 'false'}
+              class="h-auto! flex-col gap-1 p-1!"
+            >
+              <img src={`/samples/${id}.jpg`} alt="" width="64" height="48" class="rounded-sm" />
+              <span class="text-xs">{label}</span>
+            </Button>
+          ))}
+          <Button id="camera" aria-pressed="false">Live camera</Button>
+          <Button id="freeze" hidden>Freeze</Button>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="w-14 text-sm font-medium">Filter</span>
+          <div id="filters" class="flex flex-wrap gap-2" role="group" aria-label="Filter">
+            {filters.map((filter, index) => (
+              <Button aria-pressed={index === 0 ? 'true' : 'false'}>{filter.label}</Button>
+            ))}
+            <Button id="custom-filter" aria-pressed="false">Custom</Button>
+          </div>
+        </div>
+        <p id="status" class="text-sm" role="status" hidden></p>
+      </section>
+
+      <section id="processing-panel" class="space-y-2 border-t pt-4" aria-labelledby="processing">
+        <h2 id="processing" class="font-semibold"><span id="processing-label" hidden>Processing</span><span id="preview-filter" class="text-3xl sm:text-4xl"></span></h2>
+        <p id="description" class="h-10 overflow-y-auto text-sm text-muted-foreground sm:h-5"></p>
+        <div class="flex h-28 flex-col rounded-md border bg-muted">
+          <div id="custom-controls" class="grid shrink-0 grid-cols-3 gap-2 border-b p-2" hidden>
+            {['Red', 'Green', 'Blue'].map((channel, index) => (
+              <label class="min-w-0 text-xs font-medium">
+                {channel} output
+                <select class="mt-1 block w-full rounded border bg-background px-1 py-1">
+                  {customChannelRules.map((rule, ruleIndex) => (
+                    <option value={ruleIndex} selected={index === ruleIndex}>{rule.label}</option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+          <pre tabindex="0" aria-label="Filter code" class="min-h-0 flex-1 overflow-auto p-3 text-xs"><code id="code"></code></pre>
+        </div>
+      </section>
+
+      <p id="inspect-hint" class="text-sm text-muted-foreground" hidden>Tap or point at either image to inspect a pixel.</p>
+      <section id="image-pipeline" class="grid grid-cols-2 gap-4" aria-label="Image processing pipeline">
+        <article class="min-w-0 space-y-2">
+          <h2 class="font-semibold">Input</h2>
+          <div class={frameClass}>
+            <canvas id="before" class={canvasClass} tabindex="-1" aria-label="Original image. Use arrow keys to move the pixel selector."></canvas>
+          </div>
+        </article>
+        <article class="min-w-0 space-y-2">
+          <h2 class="font-semibold">Output</h2>
+          <div class={frameClass}>
+            <canvas id="after" class={canvasClass} tabindex="-1" aria-label="Filtered image. Use arrow keys to move the pixel selector."></canvas>
+          </div>
+        </article>
+      </section>
+
+      <footer id="attract">
+        <Button id="explore" class="h-16! w-full bg-primary! text-xl! text-primary-foreground! hover:bg-primary/90!">Tap to explore</Button>
+      </footer>
+    </main>
+    <script src="../app.js"></script>
+  </body>
+</html>

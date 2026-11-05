@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: oklch(0.145 0 0);
+  --color-foreground: oklch(0.985 0 0);
+  --color-primary: oklch(0.922 0 0);
+  --color-primary-foreground: oklch(0.205 0 0);
+  --color-muted: oklch(0.269 0 0);
+  --color-muted-foreground: oklch(0.708 0 0);
+  --color-accent: oklch(0.269 0 0);
+  --color-border: oklch(0.325 0 0);
+  --color-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+#exhibit[data-mode="kiosk"] {
+  display: grid;
+  grid-template-rows: auto minmax(12rem, 1fr) auto;
+  gap: 1rem;
+  min-height: 100dvh;
+  max-width: none;
+}
+
+#exhibit[data-mode="kiosk"] > * {
+  margin-block: 0;
+}
+
+#exhibit[data-mode="kiosk"] #processing-panel {
+  border: 0;
+  padding-top: 0;
+}
+
+#exhibit[data-mode="kiosk"] #image-pipeline > article {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+#exhibit[data-mode="kiosk"] #image-pipeline > article > div {
+  aspect-ratio: auto;
+  container-type: size;
+}
+
+#exhibit[data-mode="kiosk"] #image-pipeline > article > div > canvas {
+  width: min(100cqw, calc(100cqh * var(--image-ratio, 1.333)));
+  cursor: default;
+}
