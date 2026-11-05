@@ -1,4 +1,4 @@
-import { customChannelRules, filters, filterImage } from './filters.js'
+import { customChannelRules, filters, filterImage, kioskFilters } from './filters.js'
 
 const byId = (id) => document.getElementById(id)
 const before = byId('before')
@@ -73,6 +73,7 @@ const readouts = imageCanvases.map((canvas, index) => {
   }
 })
 
+const previewFilters = byId('preview-filters')
 const customButton = byId('custom-filter')
 const customControls = byId('custom-controls')
 const channelSelects = [...customControls.querySelectorAll('select')]
@@ -96,15 +97,43 @@ function updateCustomFilter() {
 function selectFilter(item) {
   filter = item
   byId('preview-filter').textContent = item.label
+  for (const [index, entry] of Array.from(previewFilters.children).entries()) {
+    if (kioskFilters[index] === item) entry.setAttribute('aria-current', 'step')
+    else entry.removeAttribute('aria-current')
+  }
   const isCustom = item.label === 'Custom'
   customControls.hidden = !isCustom
   customButton.setAttribute('aria-pressed', String(isCustom))
   byId('description').textContent = item.description
-  byId('code').textContent = item.code ?? item.apply.toString().replace(/^ {4}/gm, '')
+  showFilterCode(item.code ?? item.apply.toString().replace(/^ {4}/gm, ''))
   presetButtons.forEach((button, index) => {
     button.setAttribute('aria-pressed', String(filters[index] === item))
   })
   applyFilter()
+}
+
+function showFilterCode(source) {
+  const code = byId('code')
+  const tokens = source.split(/(\b(?:const|return|r|g|b)\b|\b\d+(?:\.\d+)?\b|=>)/g)
+  const colors = {
+    r: 'text-red-300',
+    g: 'text-green-300',
+    b: 'text-blue-300',
+    const: 'text-violet-300',
+    return: 'text-violet-300',
+    '=>': 'text-muted-foreground',
+  }
+
+  code.replaceChildren(...tokens.map((token, index) => {
+    if (index % 2 === 0) return document.createTextNode(token)
+
+    const span = document.createElement('span')
+    span.className = colors[token] ?? 'text-amber-300'
+    span.textContent = token
+    return span
+  }))
+  code.parentElement.scrollTop = 0
+  code.parentElement.scrollLeft = 0
 }
 
 function selectSource(id) {
@@ -117,19 +146,18 @@ function showStatus(message = '') {
 }
 
 function capture(media, width, height) {
-  const scale = Math.min(1, 640 / width, 480 / height)
-  const w = Math.max(1, Math.round(width * scale))
-  const h = Math.max(1, Math.round(height * scale))
-  if (sourceCanvas.width !== w || sourceCanvas.height !== h || !result) {
-    sourceCanvas.width = before.width = after.width = w
-    sourceCanvas.height = before.height = after.height = h
-    for (const canvas of imageCanvases) canvas.style.setProperty('--image-ratio', w / h)
-    result = afterContext.createImageData(w, h)
+  const cropSize = Math.min(width, height)
+  const size = Math.min(480, cropSize)
+  if (sourceCanvas.width !== size || sourceCanvas.height !== size || !result) {
+    sourceCanvas.width = before.width = after.width = size
+    sourceCanvas.height = before.height = after.height = size
+    result = afterContext.createImageData(size, size)
   }
   sourceContext.fillStyle = '#ffffff'
-  sourceContext.fillRect(0, 0, w, h)
-  sourceContext.drawImage(media, 0, 0, w, h)
-  original = sourceContext.getImageData(0, 0, w, h)
+  sourceContext.fillRect(0, 0, size, size)
+  sourceContext.drawImage(media, (width - cropSize) / 2, (height - cropSize) / 2,
+    cropSize, cropSize, 0, 0, size, size)
+  original = sourceContext.getImageData(0, 0, size, size)
   applyFilter()
 }
 
@@ -146,6 +174,7 @@ function draw() {
   const y = Math.min(height - 1, Math.floor(selectedY * height))
   beforeContext.putImageData(original, 0, 0)
   afterContext.putImageData(result, 0, 0)
+  if (readouts.every(({ panel }) => panel.hidden)) return
 
   for (const context of [beforeContext, afterContext]) {
     context.strokeStyle = '#111'
@@ -217,7 +246,10 @@ function positionMagnifier(preview, canvas, x, y) {
 }
 
 function showMagnifiers(visible) {
-  for (const { panel } of readouts) panel.hidden = exploring && !visible
+  const hidden = exploring && !visible
+  const wasVisible = readouts.some(({ panel }) => !panel.hidden)
+  for (const { panel } of readouts) panel.hidden = hidden
+  if (hidden && wasVisible) draw()
 }
 
 const clamp = (value) => Math.min(0.999999, Math.max(0, value))
@@ -233,7 +265,7 @@ for (const canvas of imageCanvases) {
   canvas.addEventListener('pointermove', inspect)
   canvas.addEventListener('pointerdown', inspect)
   canvas.addEventListener('pointerleave', (event) => {
-    if (event.pointerType !== 'touch') showMagnifiers(false)
+    if (event.pointerType === 'mouse' || event.pointerType === 'pen') showMagnifiers(false)
   })
   canvas.addEventListener('blur', () => showMagnifiers(false))
   canvas.addEventListener('keydown', (event) => {
@@ -328,7 +360,7 @@ window.addEventListener('pagehide', () => {
   request++
   stopCamera()
 })
-const attract = byId('attract')
+const kioskPanels = ['kiosk-header', 'attract', 'preview-filters'].map(byId)
 const exploreButton = byId('explore')
 const explorePanels = ['explore-header', 'explore-controls', 'inspect-hint'].map(byId)
 
@@ -336,8 +368,7 @@ function setExploring(active) {
   exploring = active
   byId('exhibit').dataset.mode = active ? 'explore' : 'kiosk'
   byId('processing-label').hidden = !active
-  byId('preview-filter').hidden = active
-  attract.hidden = active
+  for (const panel of kioskPanels) panel.hidden = active
   for (const panel of explorePanels) panel.hidden = !active
   for (const canvas of imageCanvases) canvas.tabIndex = active ? 0 : -1
 }
@@ -357,12 +388,12 @@ function startAttractMode() {
 
   channelSelects.forEach((select, index) => { select.selectedIndex = index })
   let previewIndex = 0
-  selectFilter(filters[previewIndex])
+  selectFilter(kioskFilters[previewIndex])
   const sample = sampleButtons[0]
   showImage(sample.dataset.sample, sample.id)
   previewTimer = setInterval(() => {
-    previewIndex = (previewIndex + 1) % filters.length
-    selectFilter(filters[previewIndex])
+    previewIndex = (previewIndex + 1) % kioskFilters.length
+    selectFilter(kioskFilters[previewIndex])
   }, previewDelay)
 
   if (returning) {
@@ -377,7 +408,9 @@ function resetIdleTimer() {
   idleTimer = setTimeout(startAttractMode, idleDelay)
 }
 
-exploreButton.addEventListener('click', () => {
+byId('exhibit').addEventListener('click', () => {
+  if (exploring) return
+
   clearInterval(previewTimer)
   setExploring(true)
   showMagnifiers(false)

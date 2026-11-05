@@ -1,5 +1,10 @@
 export const filters = [
   {
+    label: 'Original',
+    description: 'Keep the original red, green, and blue values.',
+    apply: (r, g, b) => [r, g, b],
+  },
+  {
     label: 'Remove red',
     description: 'Set red to zero. Keep green and blue.',
     apply: (r, g, b) => [0, g, b],
@@ -23,12 +28,23 @@ export const filters = [
     label: 'Grayscale',
     description: 'Estimate brightness and use it for all three channels.',
     apply: (r, g, b) => {
-      const gray = 0.21 * r + 0.72 * g + 0.07 * b
-      return [gray, gray, gray]
+      const brightness = 0.21 * r + 0.72 * g + 0.07 * b
+      return [brightness, brightness, brightness]
     },
   },
   {
+    label: 'Invert',
+    description: 'Subtract each color value from 255.',
+    apply: (r, g, b) => [255 - r, 255 - g, 255 - b],
+  },
+  {
+    label: 'Swap',
+    description: 'Swap red and blue. Keep green the same.',
+    apply: (r, g, b) => [b, g, r],
+  },
+  {
     label: 'Blur',
+    exploreOnly: true,
     description: 'Average the colors in a 3 × 3 neighborhood.',
     apply: (r, g, b, neighbors) => [
       average(neighbors, 0),
@@ -38,6 +54,8 @@ export const filters = [
     needsNeighbors: true,
   },
 ]
+
+export const kioskFilters = filters.filter((filter) => !filter.exploreOnly)
 
 function average(neighbors, channel) {
   return neighbors.reduce((sum, rgb) => sum + rgb[channel], 0) / neighbors.length
